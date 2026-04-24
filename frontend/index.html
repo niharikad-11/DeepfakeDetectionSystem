@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis – Deepfake Detection System</title>
+    <style>
+        /* ── Reset & Base ── */
+        *, *::before, *::after { box-sizing: border-box; }
+        body {
+            background-color: #0a0f1a;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 90px 16px 60px;
+        }
+
+        /* ── Top Nav ── */
+        .top-nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0.9rem 2rem;
+            background: rgba(10,15,26,0.97);
+            border-bottom: 1px solid #21303f;
+        }
+        .nav-logo { display:flex; align-items:center; gap:9px; text-decoration:none; }
+        .nav-logo-text {
+            font-size:1.3rem; font-weight:900;
+            background: linear-gradient(to right,#34d399,#06b6d4);
+            -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+        }
+        .btn-profile {
+            display:flex; align-items:center; gap:0.5rem;
+            background:#161b22; border:1px solid #21303f;
+            color:#ffffff; padding:0.45rem 1rem; border-radius:6px;
+            font-family:'Courier New',monospace; font-size:0.72rem;
+            letter-spacing:0.06em; cursor:pointer;
+            transition:border-color 0.2s, color 0.2s;
+        }
+        .btn-profile:hover { border-color:#00e676; color:#00e676; }
+        .avatar {
+            width:28px; height:28px; border-radius:50%;
+            background: linear-gradient(135deg,#00e676,#00b0ff);
+            display:flex; align-items:center; justify-content:center;
+            font-size:0.78rem; font-weight:700; color:#0d1117; flex-shrink:0;
+        }
+
+        /* ── Profile Overlay ── */
+        .profile-overlay {
+            display:none; position:fixed; inset:0; z-index:300;
+            background:rgba(0,0,0,0.55);
+        }
+        .profile-overlay.open { display:block; }
+
+        /* ── Profile Panel ── */
+        .profile-panel {
+            position:fixed; top:0; right:-420px; bottom:0;
+            width:360px; max-width:95vw; z-index:400;
+            background:#161b22; border-left:1px solid #21303f;
+            display:flex; flex-direction:column;
+            transition:right 0.32s cubic-bezier(0.4,0,0.2,1);
+            overflow-y:auto;
+        }
+        .profile-panel.open { right:0; }
+
+        .panel-header {
+            display:flex; align-items:center; justify-content:space-between;
+            padding:1.2rem 1.5rem; border-bottom:1px solid #21303f; flex-shrink:0;
+        }
+        .panel-title {
+            font-family:'Courier New',monospace; font-size:0.65rem;
+            letter-spacing:0.16em; color:#5a7a8a; text-transform:uppercase;
+        }
+        .btn-close {
+            background:none; border:none; color:#5a7a8a; cursor:pointer;
+            font-size:1.1rem; padding:0.2rem 0.4rem; border-radius:4px;
+            transition:color 0.2s;
+        }
+        .btn-close:hover { color:#ff4d6d; }
+
+        .profile-info {
+            display:flex; align-items:center; gap:1rem;
+            padding:1.3rem 1.5rem; border-bottom:1px solid #21303f; flex-shrink:0;
+        }
+        .profile-avatar-lg {
+            width:50px; height:50px; border-radius:50%; flex-shrink:0;
+            background:linear-gradient(135deg,#00e676,#00b0ff);
+            display:flex; align-items:center; justify-content:center;
+            font-size:1.2rem; font-weight:700; color:#0d1117;
+        }
+        .profile-name  { font-size:0.95rem; font-weight:700; color:#fff; }
+        .profile-email { font-family:'Courier New',monospace; font-size:0.68rem; color:#5a7a8a; margin-top:0.2rem; }
+
+        .history-section { padding:1.2rem 1.5rem; flex:1; }
+        .history-heading {
+            font-family:'Courier New',monospace; font-size:0.63rem;
+            letter-spacing:0.16em; color:#5a7a8a; text-transform:uppercase; margin:0 0 0.9rem;
+        }
+        .history-empty {
+            font-family:'Courier New',monospace; font-size:0.7rem;
+            color:#3a4a5a; text-align:center; padding:1.5rem 0;
+        }
+        .history-item {
+            display:flex; align-items:center; justify-content:space-between;
+            background:#0d1117; border:1px solid #21303f; border-radius:7px;
+            padding:0.6rem 0.85rem; margin-bottom:0.5rem;
+        }
+        .history-item-left { flex:1; min-width:0; }
+        .h-filename {
+            font-family:'Courier New',monospace; font-size:0.7rem; color:#fff;
+            white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+        }
+        .h-time { font-family:'Courier New',monospace; font-size:0.58rem; color:#5a7a8a; margin-top:0.18rem; }
+        .h-badge {
+            font-family:'Courier New',monospace; font-size:0.56rem;
+            letter-spacing:0.08em; font-weight:700;
+            padding:0.18rem 0.5rem; border-radius:4px; flex-shrink:0; margin-left:0.5rem;
+        }
+        .h-badge.authentic { background:rgba(0,230,118,0.12); color:#00e676; }
+        .h-badge.deepfake  { background:rgba(255,77,109,0.12); color:#ff4d6d; }
+
+        .panel-footer { padding:1.1rem 1.5rem; border-top:1px solid #21303f; flex-shrink:0; }
+        .btn-logout {
+            width:100%; padding:0.7rem; background:transparent;
+            border:1px solid rgba(255,77,109,0.35); color:#ff4d6d; border-radius:6px;
+            font-family:'Courier New',monospace; font-size:0.76rem;
+            letter-spacing:0.1em; font-weight:700; cursor:pointer;
+            transition:background 0.2s, border-color 0.2s;
+        }
+        .btn-logout:hover { background:rgba(255,77,109,0.08); border-color:#ff4d6d; }
+
+        /* ══ Main Content ══ */
+        .header-container {
+            display:flex; align-items:center; gap:14px; margin-bottom:28px;
+        }
+        .main-title {
+            background:linear-gradient(to right,#34d399,#06b6d4);
+            -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+            font-size:2.2rem; font-weight:800; margin:0; line-height:1;
+        }
+        .tagline {
+            font-size:0.65rem; letter-spacing:0.22em; color:#5a7a8a;
+            text-transform:uppercase; font-family:'Courier New',monospace; margin:0;
+        }
+
+        .upload-container { text-align:center; margin-bottom:1.1rem; }
+        .card-heading  { font-size:1.15rem; font-weight:700; color:#fff; margin:0 0 0.25rem; }
+        .card-subtitle { font-family:'Courier New',monospace; font-size:0.78rem; color:#5a7a8a; margin:0; }
+
+        /* Drop Zone */
+        .upload-card {
+            background:#1c2430; border:2px dashed #2a3a4a; border-radius:12px;
+            padding:3.5rem 2rem 2.8rem;
+            display:flex; flex-direction:column; align-items:center; gap:0.55rem;
+            cursor:pointer; transition:background 0.2s, border-color 0.2s, transform 0.2s;
+            width:100%; max-width:860px; text-align:center; user-select:none;
+        }
+        .upload-card:hover, .upload-card.dragover {
+            background:#1e2d3a; border-color:#00e676; transform:translateY(-2px);
+        }
+        .upload-card:hover .upload-icon-wrap { transform:translateY(-5px); }
+        .upload-icon-wrap { margin-bottom:0.3rem; transition:transform 0.3s; }
+        .upload-svg { width:50px; height:50px; }
+        .drop-title { font-size:1.2rem; font-weight:700; color:#fff; margin:0; }
+        .drop-sub   { font-size:0.8rem; color:#5a7a8a; font-family:'Courier New',monospace; margin:0; }
+        .formats-pill {
+            margin-top:0.4rem; background:#0d1117; border:1px solid #2a3a4a;
+            color:#5a7a8a; font-family:'Courier New',monospace; font-size:0.68rem;
+            padding:0.28rem 0.9rem; border-radius:20px; letter-spacing:0.04em;
+        }
+
+        /* Result Section */
+        .result-section { display:none; width:100%; max-width:860px; margin-top:1.1rem; }
+        .result-section.active { display:block; }
+
+        .result-card {
+            background:#161b22; border:1px solid #21303f;
+            border-radius:12px; overflow:hidden;
+        }
+        .result-topbar {
+            display:flex; justify-content:space-between; align-items:center;
+            padding:0.75rem 1.4rem; border-bottom:1px solid #21303f;
+            font-family:'Courier New',monospace; font-size:0.76rem;
+        }
+        .file-name { color:#fff; font-weight:700; }
+        .file-size  { color:#5a7a8a; }
+
+        .result-body { display:grid; grid-template-columns:1fr 1fr; min-height:340px; }
+
+        .img-side {
+            padding:1.3rem; border-right:1px solid #21303f;
+            position:relative; overflow:hidden;
+        }
+        .img-side img {
+            width:100%; height:100%; object-fit:cover;
+            border-radius:6px; display:block;
+        }
+
+        /* Scan line */
+        .scan-line {
+            display:none; position:absolute; left:1.3rem; right:1.3rem;
+            height:2px; top:1.3rem;
+            background:linear-gradient(90deg,transparent,#00e676 40%,#00b0ff 60%,transparent);
+            box-shadow:0 0 8px #00e676;
+            animation:scanDown 1.5s linear infinite; z-index:5;
+        }
+        .scan-line.on { display:block; }
+        @keyframes scanDown {
+            0%   { top:1.3rem; }
+            100% { top:calc(100% - 1.3rem); }
+        }
+
+        /* Overlay */
+        .img-overlay {
+            display:none; position:absolute; inset:1.3rem; border-radius:6px;
+            background:rgba(13,17,23,0.82);
+            flex-direction:column; align-items:center; justify-content:center;
+            gap:0.7rem; z-index:6;
+        }
+        .img-overlay.on { display:flex; }
+        .spinner {
+            width:38px; height:38px; border:2.5px solid #21303f;
+            border-top-color:#00e676; border-right-color:#00b0ff;
+            border-radius:50%; animation:spin 0.75s linear infinite;
+        }
+        @keyframes spin { to { transform:rotate(360deg); } }
+        .overlay-text {
+            font-family:'Courier New',monospace; font-size:0.68rem;
+            letter-spacing:0.14em; color:#00e676;
+        }
+
+        /* Stats side */
+        .stats-side {
+            padding:1.3rem; display:flex; flex-direction:column; gap:0.9rem;
+        }
+        .stats-title {
+            font-family:'Courier New',monospace; font-size:0.63rem;
+            letter-spacing:0.18em; color:#5a7a8a; text-transform:uppercase; margin:0;
+        }
+
+        /* Verdict */
+        .verdict-badge {
+            display:none; align-items:center; gap:0.5rem;
+            padding:0.65rem 0.9rem; border-radius:6px;
+            font-size:0.88rem; font-weight:700; letter-spacing:0.03em;
+        }
+        .verdict-badge.show { display:flex; }
+        .verdict-badge.authentic { background:rgba(0,230,118,0.1); border:1px solid rgba(0,230,118,0.4); color:#00e676; }
+        .verdict-badge.deepfake  { background:rgba(255,77,109,0.1); border:1px solid rgba(255,77,109,0.4); color:#ff4d6d; }
+        .verdict-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+        .authentic .verdict-dot { background:#00e676; box-shadow:0 0 6px #00e676; }
+        .deepfake  .verdict-dot { background:#ff4d6d; box-shadow:0 0 6px #ff4d6d; }
+
+        /* Confidence bar */
+        .conf-block { display:flex; flex-direction:column; gap:0.38rem; }
+        .conf-label-row {
+            display:flex; justify-content:space-between;
+            font-family:'Courier New',monospace; font-size:0.66rem;
+            letter-spacing:0.06em; color:#5a7a8a;
+        }
+        .conf-pct { color:#fff; font-weight:700; }
+        .conf-track { height:7px; background:#21303f; border-radius:4px; overflow:hidden; }
+        .conf-bar {
+            height:100%; width:0; border-radius:4px;
+            transition:width 1.4s cubic-bezier(0.4,0,0.2,1);
+        }
+        .conf-bar.authentic { background:linear-gradient(90deg,#00e676,#00b0ff); }
+        .conf-bar.deepfake  { background:linear-gradient(90deg,#ff4d6d,#ffaa00); }
+
+        /* Metrics */
+        .metrics-grid { display:grid; grid-template-columns:1fr 1fr; gap:0.6rem; }
+        .metric-box {
+            background:#0d1117; border:1px solid #21303f;
+            border-radius:6px; padding:0.6rem 0.8rem; transition:border-color 0.2s;
+        }
+        .metric-box:hover { border-color:rgba(0,230,118,0.3); }
+        .metric-label {
+            font-family:'Courier New',monospace; font-size:0.57rem;
+            letter-spacing:0.1em; text-transform:uppercase; color:#5a7a8a; margin:0 0 0.25rem;
+        }
+        .metric-value { font-size:0.95rem; font-weight:700; color:#fff; margin:0; }
+
+        /* Action bar */
+        .action-bar {
+            display:flex; gap:0.7rem; padding:0.9rem 1.4rem;
+            border-top:1px solid #21303f;
+        }
+        .btn-analyze {
+            flex:1; padding:0.75rem;
+            background:linear-gradient(135deg,#00e676,#00b0ff);
+            color:#0d1117; border:none; border-radius:6px;
+            font-family:'Courier New',monospace; font-size:0.82rem;
+            font-weight:700; letter-spacing:0.1em; cursor:pointer;
+            transition:opacity 0.15s, transform 0.15s;
+        }
+        .btn-analyze:hover:not(:disabled) { opacity:0.87; transform:scale(1.01); }
+        .btn-analyze:disabled { opacity:0.4; cursor:not-allowed; }
+        .btn-clear {
+            padding:0.75rem 1.1rem; background:transparent;
+            border:1px solid #21303f; color:#5a7a8a;
+            font-family:'Courier New',monospace; font-size:0.82rem;
+            letter-spacing:0.08em; border-radius:6px; cursor:pointer;
+            transition:border-color 0.2s, color 0.2s;
+        }
+        .btn-clear:hover { border-color:#ff4d6d; color:#ff4d6d; }
+
+        /* Responsive */
+        @media(max-width:680px){
+            .result-body { grid-template-columns:1fr; }
+            .img-side { border-right:none; border-bottom:1px solid #21303f; }
+            .main-title { font-size:1.6rem; }
+            .action-bar { flex-direction:column; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- TOP NAV -->
+    <nav class="top-nav">
+        <a class="nav-logo" href="landing.html">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <defs>
+                    <linearGradient id="ng" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%"   stop-color="#34d399"/>
+                        <stop offset="100%" stop-color="#06b6d4"/>
+                    </linearGradient>
+                </defs>
+                <path stroke="url(#ng)" d="M12 2L2 7l10 5 10-5-10-5z"/>
+                <path stroke="url(#ng)" d="M2 17l10 5 10-5"/>
+                <path stroke="url(#ng)" d="M2 12l10 5 10-5"/>
+            </svg>
+            <span class="nav-logo-text">DEEPFAKE DETECTION SYSTEM</span>
+        </a>
+        <button class="btn-profile" id="btnOpenProfile">
+            <div class="avatar" id="navAvatar">U</div>
+            <span id="navUsername">MY PROFILE</span>
+        </button>
+    </nav>
+
+    <!-- PROFILE OVERLAY -->
+    <div class="profile-overlay" id="profileOverlay"></div>
+
+    <!-- PROFILE PANEL -->
+    <div class="profile-panel" id="profilePanel">
+        <div class="panel-header">
+            <span class="panel-title">USER PROFILE</span>
+            <button class="btn-close" id="btnClosePanel">✕</button>
+        </div>
+        <div class="profile-info">
+            <div class="profile-avatar-lg" id="panelAvatar">U</div>
+            <div>
+                <div class="profile-name"  id="panelName">Guest</div>
+                <div class="profile-email" id="panelEmail">Not logged in</div>
+            </div>
+        </div>
+        <div class="history-section">
+            <p class="history-heading">ANALYSIS HISTORY</p>
+            <div id="historyList">
+                <div class="history-empty">No analyses yet.<br>Upload an image to get started.</div>
+            </div>
+        </div>
+        <div class="panel-footer">
+            <button class="btn-logout" id="btnLogout">⏻ &nbsp; LOGOUT</button>
+        </div>
+    </div>
+
+    <!-- ══ MAIN CONTENT ══ -->
+    <div class="header-container">
+        <svg width="38" height="38" viewBox="0 0 24 24" fill="none"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <defs>
+                <linearGradient id="hg" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%"   stop-color="#34d399"/>
+                    <stop offset="100%" stop-color="#06b6d4"/>
+                </linearGradient>
+            </defs>
+            <path stroke="url(#hg)" d="M12 2L2 7l10 5 10-5-10-5z"/>
+            <path stroke="url(#hg)" d="M2 17l10 5 10-5"/>
+            <path stroke="url(#hg)" d="M2 12l10 5 10-5"/>
+        </svg>
+        <div>
+            <h1 class="main-title">DEEPFAKE DETECTION SYSTEM</h1>
+            <p class="tagline">AI-POWERED AUTHENTICITY VERIFICATION</p>
+        </div>
+    </div>
+
+    <div class="upload-container">
+        <h2 class="card-heading">Analyze Image for Deepfake Detection</h2>
+        <p class="card-subtitle">Upload or drag and drop an image to verify its authenticity</p>
+    </div>
+
+    <!-- DROP ZONE -->
+    <div class="upload-card" id="dropZone" role="button" tabindex="0">
+        <div class="upload-icon-wrap">
+            <svg class="upload-svg" viewBox="0 0 24 24" fill="none"
+                stroke="#00e676" stroke-width="2.2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+        </div>
+        <p class="drop-title">Drop your image here</p>
+        <p class="drop-sub">or click to browse files</p>
+        <span class="formats-pill">Supported: JPG · PNG · WEBP &nbsp;|&nbsp; Max 10MB</span>
+    </div>
+
+    <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" style="display:none">
+
+    <!-- RESULT SECTION -->
+    <div class="result-section" id="resultSection">
+        <div class="result-card">
+
+            <div class="result-topbar">
+                <span class="file-name" id="rName">filename.jpg</span>
+                <span class="file-size" id="rSize">--</span>
+            </div>
+
+            <div class="result-body">
+                <!-- Left: image -->
+                <div class="img-side">
+                    <img id="previewImg" src="" alt="Preview"/>
+                    <div class="scan-line"   id="scanLine"></div>
+                    <div class="img-overlay" id="imgOverlay">
+                        <div class="spinner"></div>
+                        <span class="overlay-text">ANALYZING IMAGE</span>
+                    </div>
+                </div>
+
+                <!-- Right: stats -->
+                <div class="stats-side">
+                    <p class="stats-title">Detection Results</p>
+
+                    <div class="verdict-badge" id="verdictBadge">
+                        <div class="verdict-dot"></div>
+                        <span id="verdictText">--</span>
+                    </div>
+
+                    <div class="conf-block">
+                        <div class="conf-label-row">
+                            <span>CONFIDENCE SCORE</span>
+                            <span class="conf-pct" id="confPct">--</span>
+                        </div>
+                        <div class="conf-track">
+                            <div class="conf-bar" id="confBar"></div>
+                        </div>
+                    </div>
+
+                    <div class="metrics-grid">
+                        <div class="metric-box">
+                            <p class="metric-label">Face Analysis</p>
+                            <p class="metric-value" id="mFace">--</p>
+                        </div>
+                        <div class="metric-box">
+                            <p class="metric-label">Texture</p>
+                            <p class="metric-value" id="mTexture">--</p>
+                        </div>
+                        <div class="metric-box">
+                            <p class="metric-label">Frequency</p>
+                            <p class="metric-value" id="mFreq">--</p>
+                        </div>
+                        <div class="metric-box">
+                            <p class="metric-label">Artifacts</p>
+                            <p class="metric-value" id="mArtifact">--</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-bar">
+                <button class="btn-analyze" id="btnAnalyze">⚡ RUN ANALYSIS</button>
+                <button class="btn-clear"   id="btnClear">CLEAR</button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ══ SCRIPTS ══ -->
+    <script>
+    // ── Element refs ──
+    var dropZone      = document.getElementById('dropZone');
+    var fileInput     = document.getElementById('fileInput');
+    var uploadCard    = document.querySelector('.upload-card');
+    var resultSection = document.getElementById('resultSection');
+    var previewImg    = document.getElementById('previewImg');
+    var rName         = document.getElementById('rName');
+    var rSize         = document.getElementById('rSize');
+    var scanLine      = document.getElementById('scanLine');
+    var imgOverlay    = document.getElementById('imgOverlay');
+    var verdictBadge  = document.getElementById('verdictBadge');
+    var verdictText   = document.getElementById('verdictText');
+    var confBar       = document.getElementById('confBar');
+    var confPct       = document.getElementById('confPct');
+    var btnAnalyze    = document.getElementById('btnAnalyze');
+    var btnClear      = document.getElementById('btnClear');
+    var currentFile   = '';
+
+    // ── Drag & Drop ──
+    dropZone.addEventListener('dragover', function(e) {
+        e.preventDefault(); dropZone.classList.add('dragover');
+    });
+    dropZone.addEventListener('dragleave', function() {
+        dropZone.classList.remove('dragover');
+    });
+    dropZone.addEventListener('drop', function(e) {
+        e.preventDefault(); dropZone.classList.remove('dragover');
+        if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+    });
+
+    // ── Click to browse ──
+    dropZone.addEventListener('click',   function() { fileInput.click(); });
+    dropZone.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') fileInput.click();
+    });
+    fileInput.addEventListener('change', function() {
+        if (fileInput.files[0]) handleFile(fileInput.files[0]);
+    });
+
+    // ── Handle file ──
+    function handleFile(file) {
+        var allowed = ['image/jpeg','image/png','image/webp'];
+        if (!allowed.includes(file.type)) { alert('Please upload JPG, PNG or WEBP only.'); return; }
+        if (file.size > 10*1024*1024)     { alert('File must be under 10MB.'); return; }
+        currentFile = file.name;
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            previewImg.src           = e.target.result;
+            rName.textContent        = file.name;
+            rSize.textContent        = formatBytes(file.size);
+            uploadCard.style.display = 'none';
+            resultSection.classList.add('active');
+            resetResults();
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function formatBytes(b) {
+        if (b < 1024)        return b + ' B';
+        if (b < 1024*1024)   return (b/1024).toFixed(1) + ' KB';
+        return (b/(1024*1024)).toFixed(2) + ' MB';
+    }
+
+    function resetResults() {
+        verdictBadge.className  = 'verdict-badge';
+        verdictText.textContent = '--';
+        confBar.style.width     = '0%';
+        confBar.className       = 'conf-bar';
+        confPct.textContent     = '--';
+        ['mFace','mTexture','mFreq','mArtifact'].forEach(function(id) {
+            var el = document.getElementById(id);
+            el.textContent = '--'; el.style.color = '';
+        });
+        btnAnalyze.disabled    = false;
+        btnAnalyze.textContent = '⚡ RUN ANALYSIS';
+    }
+
+        // ── Run Analysis ──
+btnAnalyze.addEventListener('click', function() {
+    btnAnalyze.disabled    = true;
+    btnAnalyze.textContent = 'ANALYZING...';
+    scanLine.classList.add('on');
+    imgOverlay.classList.add('on');
+    // 2. Prepare the image to be sent to the AI
+    var formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+
+    // 3. Talk to your Python Backend
+    fetch('http://127.0.0.1:5000/predict', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        // 4. Stop animations when the AI answers
+        stopScan();
+
+        // 5. Use the REAL results from your model
+        var isAuth = (data.label === "Real");
+        var score = data.confidence;
+        
+        // Match the colors/metrics your friend designed
+        var metrics = isAuth 
+            ? { face:'PASS', texture:'NORMAL', freq:'NORMAL', artifact:'NONE' } 
+            : { face:'ANOMALY', texture:'WARPED', freq:'SPIKED', artifact:'DETECTED' };
+
+        showResults(isAuth, score, metrics);
+    })
+    .catch(error => {
+        // 6. Safety Net: If the backend is off, tell the user
+        console.error("Error:", error);
+        alert("The AI Brain (app.py) is not running! Check your terminal.");
+        stopScan();
+    });
+});
+
+
+    function stopScan() {
+        scanLine.classList.remove('on');
+        imgOverlay.classList.remove('on');
+        btnAnalyze.textContent = '⚡ RUN ANALYSIS';
+    }
+
+    function showResults(isAuth, score, metrics) {
+        var cls = isAuth ? 'authentic' : 'deepfake';
+        verdictBadge.className  = 'verdict-badge show ' + cls;
+        verdictText.textContent = isAuth ? '✓  AUTHENTIC IMAGE DETECTED' : '⚠  DEEPFAKE DETECTED';
+        confPct.textContent     = score + '%';
+        confBar.className       = 'conf-bar ' + cls;
+        setTimeout(function() { confBar.style.width = score + '%'; }, 40);
+        setMetric('mFace',     metrics.face,     isAuth ? '#00e676' : '#ff4d6d');
+        setMetric('mTexture',  metrics.texture,  isAuth ? '#00e676' : '#ffaa00');
+        setMetric('mFreq',     metrics.freq,     isAuth ? '#5a7a8a' : '#ffaa00');
+        setMetric('mArtifact', metrics.artifact, isAuth ? '#5a7a8a' : '#ff4d6d');
+        btnAnalyze.disabled = false;
+        saveToHistory(currentFile, cls, score);
+    }
+
+    function setMetric(id, value, color) {
+        var el = document.getElementById(id);
+        el.textContent = value; el.style.color = color;
+    }
+
+    // ── Clear ──
+    btnClear.addEventListener('click', function() {
+        resultSection.classList.remove('active');
+        uploadCard.style.display = '';
+        fileInput.value = ''; previewImg.src = ''; currentFile = '';
+    });
+
+    // ── Prevent browser opening dropped file ──
+    document.addEventListener('dragover', function(e) { e.preventDefault(); });
+    document.addEventListener('drop',     function(e) { e.preventDefault(); });
+
+    // ══════════════════════════════
+    //  PROFILE PANEL
+    // ══════════════════════════════
+    var session = null;
+    try { session = JSON.parse(localStorage.getItem('dg_session') || 'null'); } catch(e){}
+
+    // ── Redirect to login if not logged in ──
+    if (!session) {
+        window.location.href = 'login.html';
+    }
+
+    function loadProfile() {
+        if (!session) return;
+        var initial = (session.username || 'U').charAt(0).toUpperCase();
+        document.getElementById('navAvatar').textContent   = initial;
+        document.getElementById('navUsername').textContent = session.username.toUpperCase();
+        document.getElementById('panelAvatar').textContent = initial;
+        document.getElementById('panelName').textContent   = session.username;
+        document.getElementById('panelEmail').textContent  = session.email;
+        renderHistory();
+    }
+
+    function renderHistory() {
+        if (!session) return;
+        var users = [];
+        try { users = JSON.parse(localStorage.getItem('dg_users') || '[]'); } catch(e){}
+        var user = users.find(function(u){ return u.username === session.username; });
+        var list = document.getElementById('historyList');
+        if (!user || !user.history || user.history.length === 0) {
+            list.innerHTML = '<div class="history-empty">No analyses yet.<br>Upload an image to get started.</div>';
+            return;
+        }
+        list.innerHTML = user.history.slice().reverse().map(function(h) {
+            return '<div class="history-item">' +
+                '<div class="history-item-left">' +
+                    '<div class="h-filename">' + h.filename + '</div>' +
+                    '<div class="h-time">' + h.time + ' · ' + h.score + '% confidence</div>' +
+                '</div>' +
+                '<span class="h-badge ' + h.result + '">' + h.result.toUpperCase() + '</span>' +
+            '</div>';
+        }).join('');
+    }
+
+    function saveToHistory(filename, result, score) {
+        if (!session || !filename) return;
+        var users = [];
+        try { users = JSON.parse(localStorage.getItem('dg_users') || '[]'); } catch(e){}
+        var idx = users.findIndex(function(u){ return u.username === session.username; });
+        if (idx === -1) return;
+        if (!users[idx].history) users[idx].history = [];
+        users[idx].history.push({ filename:filename, result:result, score:score, time:new Date().toLocaleString() });
+        localStorage.setItem('dg_users', JSON.stringify(users));
+        renderHistory();
+    }
+
+    // Panel open/close
+    document.getElementById('btnOpenProfile').addEventListener('click', function() {
+        document.getElementById('profilePanel').classList.add('open');
+        document.getElementById('profileOverlay').classList.add('open');
+    });
+    function closePanel() {
+        document.getElementById('profilePanel').classList.remove('open');
+        document.getElementById('profileOverlay').classList.remove('open');
+    }
+    document.getElementById('btnClosePanel').addEventListener('click', closePanel);
+    document.getElementById('profileOverlay').addEventListener('click', closePanel);
+
+    // Logout
+    document.getElementById('btnLogout').addEventListener('click', function() {
+        localStorage.removeItem('dg_session');
+        window.location.href = 'loginpage.html';
+    });
+
+    loadProfile();
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register – DeepGuard</title>
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        body { justify-content: flex-start; padding-top: 0; }
+
+        /* Subtle animated background */
+        .bg-grid {
+            position: fixed; inset: 0; z-index: 0;
+            background-image:
+                linear-gradient(rgba(0,230,118,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,230,118,0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+        }
+        .auth-wrap { position: relative; z-index: 1; }
+
+        /* Password strength bar */
+        .strength-wrap { margin-top: 0.5rem; }
+        .strength-bar-track {
+            height: 4px; background: #21303f;
+            border-radius: 4px; overflow: hidden;
+        }
+        .strength-bar-fill {
+            height: 100%; width: 0;
+            border-radius: 4px;
+            transition: width 0.4s, background 0.4s;
+        }
+        .strength-label {
+            font-family: 'Courier New', monospace;
+            font-size: 0.6rem; letter-spacing: 0.1em;
+            color: #5a7a8a; margin-top: 0.3rem;
+        }
+
+        /* Divider */
+        .divider {
+            border: none; border-top: 1px solid #21303f;
+            margin: 1.5rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-grid"></div>
+
+    <div class="auth-wrap">
+        <a class="auth-logo" href="landing.html">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <defs><linearGradient id="ng" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#34d399"/><stop offset="100%" stop-color="#06b6d4"/></linearGradient></defs>
+                <path stroke="url(#ng)" d="M12 2L2 7l10 5 10-5-10-5z"/>
+                <path stroke="url(#ng)" d="M2 17l10 5 10-5"/>
+                <path stroke="url(#ng)" d="M2 12l10 5 10-5"/>
+            </svg>
+            <span class="auth-logo-text">DEEPFAKE DETECTION SYSTEM</span>
+        </a>
+
+        <div class="auth-card">
+            <h2 class="auth-title">Create Account</h2>
+            <p class="auth-sub">REGISTER TO START DETECTING DEEPFAKES</p>
+
+            <div class="field">
+                <label>Username</label>
+                <input type="text" id="regUsername" placeholder="e.g. john_doe" autocomplete="off"/>
+                <div class="field-error" id="errUsername">Username is required.</div>
+            </div>
+
+            <div class="field">
+                <label>Email Address</label>
+                <input type="email" id="regEmail" placeholder="you@example.com" autocomplete="off"/>
+                <div class="field-error" id="errEmail">Enter a valid email address.</div>
+            </div>
+
+            <div class="field">
+                <label>Set Password</label>
+                <input type="password" id="regPassword" placeholder="Min. 6 characters"/>
+                <div class="strength-wrap">
+                    <div class="strength-bar-track">
+                        <div class="strength-bar-fill" id="strengthBar"></div>
+                    </div>
+                    <div class="strength-label" id="strengthLabel">PASSWORD STRENGTH</div>
+                </div>
+                <div class="field-error" id="errPassword">Password must be at least 6 characters.</div>
+            </div>
+
+            <div class="field">
+                <label>Confirm Password</label>
+                <input type="password" id="regConfirm" placeholder="Repeat your password"/>
+                <div class="field-error" id="errConfirm">Passwords do not match.</div>
+            </div>
+
+            <hr class="divider">
+
+            <button class="btn-submit" id="btnRegister">CREATE ACCOUNT →</button>
+        </div>
+
+        <div class="auth-switch">
+            Already have an account? <a href="login.html">Sign in here</a>
+        </div>
+    </div>
+
+    <script>
+        // Password strength indicator
+        document.getElementById('regPassword').addEventListener('input', function() {
+            var val = this.value;
+            var bar = document.getElementById('strengthBar');
+            var lbl = document.getElementById('strengthLabel');
+            var score = 0;
+            if (val.length >= 6)  score++;
+            if (val.length >= 10) score++;
+            if (/[A-Z]/.test(val)) score++;
+            if (/[0-9]/.test(val)) score++;
+            if (/[^A-Za-z0-9]/.test(val)) score++;
+
+            var colors = ['#ff4d6d','#ffaa00','#ffaa00','#00e676','#00e676'];
+            var labels = ['VERY WEAK','WEAK','FAIR','STRONG','VERY STRONG'];
+            var widths = ['20%','40%','60%','80%','100%'];
+
+            bar.style.width      = val.length ? widths[Math.min(score,4)] : '0';
+            bar.style.background = val.length ? colors[Math.min(score,4)] : '';
+            lbl.textContent      = val.length ? labels[Math.min(score,4)] : 'PASSWORD STRENGTH';
+            lbl.style.color      = val.length ? colors[Math.min(score,4)] : '#5a7a8a';
+        });
+
+        // Register submit
+        document.getElementById('btnRegister').addEventListener('click', function() {
+            var username = document.getElementById('regUsername').value.trim();
+            var email    = document.getElementById('regEmail').value.trim();
+            var password = document.getElementById('regPassword').value;
+            var confirm  = document.getElementById('regConfirm').value;
+            var valid    = true;
+
+            // Clear errors
+            ['errUsername','errEmail','errPassword','errConfirm'].forEach(function(id) {
+                document.getElementById(id).classList.remove('show');
+            });
+
+            if (!username) {
+                document.getElementById('errUsername').classList.add('show'); valid = false;
+            }
+            if (!email || !email.includes('@')) {
+                document.getElementById('errEmail').classList.add('show'); valid = false;
+            }
+            if (password.length < 6) {
+                document.getElementById('errPassword').classList.add('show'); valid = false;
+            }
+            if (password !== confirm) {
+                document.getElementById('errConfirm').classList.add('show'); valid = false;
+            }
+
+            if (valid) {
+                // Save user to localStorage so login can retrieve it
+                var users = JSON.parse(localStorage.getItem('dg_users') || '[]');
+                // Check duplicate
+                var exists = users.find(function(u) { return u.email === email || u.username === username; });
+                if (exists) {
+                    document.getElementById('errEmail').textContent = 'Username or email already registered.';
+                    document.getElementById('errEmail').classList.add('show');
+                    return;
+                }
+                users.push({ username: username, email: email, password: password, history: [] });
+                localStorage.setItem('dg_users', JSON.stringify(users));
+                // Redirect to login
+                window.location.href = 'loginpage.html';
+            }
+        });
+    </script>
+</body>
+</html>

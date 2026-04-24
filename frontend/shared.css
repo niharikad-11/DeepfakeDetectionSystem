@@ -1,0 +1,108 @@
+/* ══════════════════════════════
+   shared.css  —  used by ALL pages
+   ══════════════════════════════ */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+    background-color: #0a0f1a;
+    color: #ffffff;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 40px 16px 60px;
+}
+
+/* ── Auth card (login / register) ── */
+.auth-wrap {
+    width: 100%;
+    max-width: 440px;
+    margin-top: 80px;
+}
+.auth-logo {
+    display: flex; align-items: center; gap: 10px;
+    justify-content: center; margin-bottom: 2.5rem;
+    text-decoration: none;
+}
+.auth-logo-text {
+    font-size: 1.6rem; font-weight: 900;
+    background: linear-gradient(to right, #34d399, #06b6d4);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.auth-card {
+    background: #161b22;
+    border: 1px solid #21303f;
+    border-radius: 14px;
+    padding: 2.4rem 2.2rem;
+}
+.auth-title {
+    font-size: 1.4rem; font-weight: 800; color: #fff;
+    margin: 0 0 0.4rem;
+}
+.auth-sub {
+    font-family: 'Courier New', monospace;
+    font-size: 0.72rem; letter-spacing: 0.06em;
+    color: #5a7a8a; margin: 0 0 2rem;
+}
+
+/* Form fields */
+.field { margin-bottom: 1.2rem; }
+.field label {
+    display: block;
+    font-family: 'Courier New', monospace;
+    font-size: 0.65rem; letter-spacing: 0.12em;
+    color: #5a7a8a; text-transform: uppercase;
+    margin-bottom: 0.45rem;
+}
+.field input {
+    width: 100%;
+    background: #0d1117;
+    border: 1px solid #21303f;
+    border-radius: 7px;
+    padding: 0.75rem 1rem;
+    color: #ffffff;
+    font-family: 'Courier New', monospace;
+    font-size: 0.88rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.field input:focus {
+    border-color: #00e676;
+    box-shadow: 0 0 0 3px rgba(0,230,118,0.1);
+}
+.field input::placeholder { color: #3a4a5a; }
+
+/* Submit button */
+.btn-submit {
+    width: 100%; padding: 0.85rem;
+    background: linear-gradient(135deg, #00e676, #00b0ff);
+    color: #0d1117; border: none; border-radius: 7px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.88rem; font-weight: 700;
+    letter-spacing: 0.1em; cursor: pointer;
+    transition: opacity 0.2s, transform 0.2s;
+    margin-top: 0.5rem;
+}
+.btn-submit:hover { opacity: 0.87; transform: translateY(-1px); }
+
+/* Redirect link */
+.auth-switch {
+    text-align: center;
+    font-family: 'Courier New', monospace;
+    font-size: 0.72rem; color: #5a7a8a;
+    margin-top: 1.4rem;
+}
+.auth-switch a { color: #00e676; text-decoration: none; }
+.auth-switch a:hover { text-decoration: underline; }
+
+/* Error message */
+.field-error {
+    font-family: 'Courier New', monospace;
+    font-size: 0.65rem; color: #ff4d6d;
+    margin-top: 0.3rem; display: none;
+}
+.field-error.show { display: block; }

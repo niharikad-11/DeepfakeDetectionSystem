@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeepGuard – Deepfake Detection System</title>
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        /* ── Landing page specific ── */
+        body { overflow-x: hidden; padding: 0; }
+
+        /* Animated grid background */
+        .bg-grid {
+            position: fixed; inset: 0; z-index: 0;
+            background-image:
+                linear-gradient(rgba(0,230,118,0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,230,118,0.04) 1px, transparent 1px);
+            background-size: 60px 60px;
+            animation: gridShift 20s linear infinite;
+        }
+        @keyframes gridShift {
+            0%   { background-position: 0 0; }
+            100% { background-position: 60px 60px; }
+        }
+
+        /* Floating orbs */
+        .orb {
+            position: fixed; border-radius: 50%; filter: blur(80px);
+            pointer-events: none; z-index: 0;
+        }
+        .orb-1 { width:420px;height:420px;background:rgba(0,230,118,0.08);top:-100px;left:-100px;animation:orbFloat1 12s ease-in-out infinite; }
+        .orb-2 { width:320px;height:320px;background:rgba(0,176,255,0.08);bottom:-80px;right:-80px;animation:orbFloat2 15s ease-in-out infinite; }
+        .orb-3 { width:200px;height:200px;background:rgba(0,230,118,0.05);top:50%;left:60%;animation:orbFloat3 10s ease-in-out infinite; }
+        @keyframes orbFloat1 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(40px,30px)} }
+        @keyframes orbFloat2 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-30px,-40px)} }
+        @keyframes orbFloat3 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(20px,-25px)} }
+
+        /* Nav */
+        .nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 1.2rem 3rem;
+            background: rgba(10,15,26,0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(0,230,118,0.1);
+        }
+        .nav-logo { display:flex;align-items:center;gap:10px;text-decoration:none; }
+        .nav-logo-text { font-size:1.4rem;font-weight:800;background:linear-gradient(to right,#34d399,#06b6d4);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent; }
+        .nav-links { display:flex;gap:1rem; }
+        .btn-nav {
+            padding:0.5rem 1.4rem;border-radius:6px;font-family:'Courier New',monospace;
+            font-size:0.78rem;font-weight:700;letter-spacing:0.08em;cursor:pointer;
+            text-decoration:none;transition:all 0.2s;
+        }
+        .btn-nav-outline { border:1px solid #2a3a4a;color:#5a7a8a;background:transparent; }
+        .btn-nav-outline:hover { border-color:#00e676;color:#00e676; }
+        .btn-nav-fill { background:linear-gradient(135deg,#00e676,#00b0ff);color:#0d1117;border:none; }
+        .btn-nav-fill:hover { opacity:0.85;transform:scale(1.03); }
+
+        /* Hero */
+        .hero {
+            position:relative;z-index:1;
+            min-height:100vh;
+            display:flex;flex-direction:column;align-items:center;justify-content:center;
+            text-align:center;padding:6rem 2rem 4rem;
+            gap:2rem;
+        }
+        .hero-badge {
+            display:inline-flex;align-items:center;gap:0.5rem;
+            border:1px solid rgba(0,230,118,0.3);background:rgba(0,230,118,0.06);
+            color:#00e676;font-family:'Courier New',monospace;font-size:0.7rem;
+            letter-spacing:0.16em;padding:0.4rem 1rem;border-radius:20px;
+            animation:fadeDown 0.6s ease both;
+        }
+        .hero-badge-dot { width:6px;height:6px;background:#00e676;border-radius:50%;box-shadow:0 0 6px #00e676;animation:pulse 2s ease infinite; }
+        @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.4} }
+
+        .hero-title {
+            font-size: clamp(2.8rem, 6vw, 5.5rem);
+            font-weight: 900;
+            line-height: 1.05;
+            letter-spacing: -0.02em;
+            color: #fff;
+            animation: fadeUp 0.7s ease 0.1s both;
+        }
+        .hero-title span {
+            background: linear-gradient(135deg, #34d399, #06b6d4);
+            -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero-sub {
+            font-size:1.05rem;color:#5a7a8a;max-width:560px;line-height:1.7;
+            font-family:'Courier New',monospace;letter-spacing:0.02em;
+            animation: fadeUp 0.7s ease 0.2s both;
+        }
+        .hero-cta {
+            display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;
+            animation: fadeUp 0.7s ease 0.3s both;
+        }
+        .btn-cta {
+            padding:0.85rem 2.2rem;border-radius:8px;font-family:'Courier New',monospace;
+            font-size:0.88rem;font-weight:700;letter-spacing:0.1em;cursor:pointer;
+            text-decoration:none;transition:all 0.2s;
+        }
+        .btn-cta-primary { background:linear-gradient(135deg,#00e676,#00b0ff);color:#0d1117;border:none; }
+        .btn-cta-primary:hover { opacity:0.87;transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,230,118,0.25); }
+        .btn-cta-secondary { background:transparent;border:1px solid #2a3a4a;color:#ffffff; }
+        .btn-cta-secondary:hover { border-color:#00e676;color:#00e676;transform:translateY(-2px); }
+
+        /* Sliding image strip */
+        .img-strip-wrap {
+            position:relative;z-index:1;
+            width:100%;overflow:hidden;
+            padding:2rem 0;
+            mask-image:linear-gradient(90deg,transparent,black 15%,black 85%,transparent);
+            -webkit-mask-image:linear-gradient(90deg,transparent,black 15%,black 85%,transparent);
+            animation: fadeUp 0.7s ease 0.4s both;
+        }
+        .img-strip {
+            display:flex;gap:1.2rem;
+            animation:slideLeft 30s linear infinite;
+            width:max-content;
+        }
+        .img-strip:hover { animation-play-state:paused; }
+        @keyframes slideLeft { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+
+        .strip-card {
+            width:220px;height:140px;border-radius:10px;overflow:hidden;flex-shrink:0;
+            border:1px solid #21303f;position:relative;
+            background:#161b22;
+        }
+        .strip-card-inner {
+            width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+            font-family:'Courier New',monospace;font-size:0.65rem;letter-spacing:0.1em;
+            color:#5a7a8a;flex-direction:column;gap:0.5rem;
+        }
+        .strip-card.real .strip-card-inner { border-top:3px solid #00e676; }
+        .strip-card.fake .strip-card-inner { border-top:3px solid #ff4d6d; }
+        .strip-card-label {
+            position:absolute;bottom:0.6rem;right:0.6rem;
+            font-family:'Courier New',monospace;font-size:0.6rem;letter-spacing:0.1em;
+            padding:0.2rem 0.5rem;border-radius:4px;font-weight:700;
+        }
+        .strip-card.real .strip-card-label { background:rgba(0,230,118,0.15);color:#00e676; }
+        .strip-card.fake .strip-card-label { background:rgba(255,77,109,0.15);color:#ff4d6d; }
+
+        /* Stats section */
+        .stats-row {
+            position:relative;z-index:1;
+            display:flex;gap:2rem;flex-wrap:wrap;justify-content:center;
+            padding:2rem;animation:fadeUp 0.7s ease 0.5s both;
+        }
+        .stat-item {
+            text-align:center;
+            padding:1.5rem 2rem;
+            border:1px solid #21303f;border-radius:10px;
+            background:#161b22;min-width:140px;
+            transition:border-color 0.2s,transform 0.2s;
+        }
+        .stat-item:hover { border-color:rgba(0,230,118,0.4);transform:translateY(-4px); }
+        .stat-num {
+            font-size:2rem;font-weight:900;
+            background:linear-gradient(135deg,#34d399,#06b6d4);
+            -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+        }
+        .stat-label { font-family:'Courier New',monospace;font-size:0.62rem;letter-spacing:0.12em;color:#5a7a8a;margin-top:0.3rem; }
+
+        /* Features */
+        .features {
+            position:relative;z-index:1;
+            display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+            gap:1.2rem;width:100%;max-width:900px;
+            padding:0 1rem 4rem;
+            animation:fadeUp 0.7s ease 0.6s both;
+        }
+        .feature-card {
+            background:#161b22;border:1px solid #21303f;border-radius:10px;
+            padding:1.5rem;transition:border-color 0.2s,transform 0.2s;
+        }
+        .feature-card:hover { border-color:rgba(0,230,118,0.3);transform:translateY(-3px); }
+        .feature-icon { font-size:1.8rem;margin-bottom:0.8rem; }
+        .feature-title { font-size:0.9rem;font-weight:700;color:#fff;margin-bottom:0.4rem; }
+        .feature-desc { font-family:'Courier New',monospace;font-size:0.72rem;color:#5a7a8a;line-height:1.6; }
+
+        @keyframes fadeUp   { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes fadeDown { from{opacity:0;transform:translateY(-16px)} to{opacity:1;transform:translateY(0)} }
+    </style>
+</head>
+<body>
+    <div class="bg-grid"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
+    <!-- NAV -->
+    <nav class="nav">
+        <a class="nav-logo" href="landing.html">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <defs><linearGradient id="ng" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#34d399"/><stop offset="100%" stop-color="#06b6d4"/></linearGradient></defs>
+                <path stroke="url(#ng)" d="M12 2L2 7l10 5 10-5-10-5z"/>
+                <path stroke="url(#ng)" d="M2 17l10 5 10-5"/>
+                <path stroke="url(#ng)" d="M2 12l10 5 10-5"/>
+            </svg>
+            <span class="nav-logo-text">DEEPFAKE DETECTION SYSTEM</span>
+        </a>
+        <div class="nav-links">
+            <a class="btn-nav btn-nav-outline" href="loginpage.html">LOGIN</a>
+            <a class="btn-nav btn-nav-fill"    href="register.html">REGISTER</a>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="hero">
+        <div class="hero-badge">
+            <div class="hero-badge-dot"></div>
+            AI-POWERED AUTHENTICITY VERIFICATION
+        </div>
+
+        <h1 class="hero-title">
+            DEEPFAKE<br><span>DETECTION</span><br>SYSTEM
+        </h1>
+
+        <p class="hero-sub">
+            Detect manipulated images instantly using advanced AI analysis.
+            Upload any image and get a detailed authenticity report in seconds.
+        </p>
+
+        <div class="hero-cta">
+            <a class="btn-cta btn-cta-primary"    href="register.html">GET STARTED →</a>
+            <a class="btn-cta btn-cta-secondary"  href="loginpage.html">SIGN IN</a>
+        </div>
+    </section>
+
+    <!-- SLIDING IMAGE STRIP -->
+    <div class="img-strip-wrap">
+        <div class="img-strip" id="imgStrip">
+            <!-- Cards duplicated for seamless loop -->
+            <div class="strip-card real"><div class="strip-card-inner"><span style="font-size:2rem">🖼️</span><span>PORTRAIT.JPG</span></div><span class="strip-card-label">AUTHENTIC</span></div>
+            <div class="strip-card fake"><div class="strip-card-inner"><span style="font-size:2rem">👤</span><span>FACE_001.PNG</span></div><span class="strip-card-label">DEEPFAKE</span></div>
+            <div class="strip-card real"><div class="strip-card-inner"><span style="font-size:2rem">📷</span><span>PHOTO_24.JPG</span></div><span class="strip-card-label">AUTHENTIC</span></div>
+            <div class="strip-card fake"><div class="strip-card-inner"><span style="font-size:2rem">🤖</span><span>GAN_IMG.PNG</span></div><span class="strip-card-label">DEEPFAKE</span></div>
+            <div class="strip-card real"><div class="strip-card-inner"><span style="font-size:2rem">🖼️</span><span>SELFIE.JPG</span></div><span class="strip-card-label">AUTHENTIC</span></div>
+            <div class="strip-card fake"><div class="strip-card-inner"><span style="font-size:2rem">⚠️</span><span>SYNTH_03.JPG</span></div><span class="strip-card-label">DEEPFAKE</span></div>
+            <div class="strip-card real"><div class="strip-card-inner"><span style="font-size:2rem">📸</span><span>IMG_9823.JPG</span></div><span class="strip-card-label">AUTHENTIC</span></div>
+            <div class="strip-card fake"><div class="strip-card-inner"><span style="font-size:2rem">🎭</span><span>FAKE_77.PNG</span></div><span class="strip-card-label">DEEPFAKE</span></div>
+            <!-- Duplicate for seamless loop -->
+            <div class="strip-card real"><div class="strip-card-inner"><span style="font-size:2rem">🖼️</span><span>PORTRAIT.JPG</span></div><span class="strip-card-label">AUTHENTIC</span></div>
+            <div class="strip-card fake"><div class="strip-card-inner"><span style="font-size:2rem">👤</span><span>FACE_001.PNG</span></div><span class="strip-card-label">DEEPFAKE</span></div>
+            <div class="strip-card real"><div class="strip-card-inner"><span style="font-size:2rem">📷</span><span>PHOTO_24.JPG</span></div><span class="strip-card-label">AUTHENTIC</span></div>
+            <div class="strip-card fake"><div class="strip-card-inner"><span style="font-size:2rem">🤖</span><span>GAN_IMG.PNG</span></div><span class="strip-card-label">DEEPFAKE</span></div>
+            <div class="strip-card real"><div class="strip-card-inner"><span style="font-size:2rem">🖼️</span><span>SELFIE.JPG</span></div><span class="strip-card-label">AUTHENTIC</span></div>
+            <div class="strip-card fake"><div class="strip-card-inner"><span style="font-size:2rem">⚠️</span><span>SYNTH_03.JPG</span></div><span class="strip-card-label">DEEPFAKE</span></div>
+            <div class="strip-card real"><div class="strip-card-inner"><span style="font-size:2rem">📸</span><span>IMG_9823.JPG</span></div><span class="strip-card-label">AUTHENTIC</span></div>
+            <div class="strip-card fake"><div class="strip-card-inner"><span style="font-size:2rem">🎭</span><span>FAKE_77.PNG</span></div><span class="strip-card-label">DEEPFAKE</span></div>
+        </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-row">
+        <div class="stat-item"><div class="stat-num">99.2%</div><div class="stat-label">DETECTION ACCURACY</div></div>
+        <div class="stat-item"><div class="stat-num">2.8s</div><div class="stat-label">AVG ANALYSIS TIME</div></div>
+        <div class="stat-item"><div class="stat-num">4</div><div class="stat-label">AI METRICS CHECKED</div></div>
+        <div class="stat-item"><div class="stat-num">10MB</div><div class="stat-label">MAX IMAGE SIZE</div></div>
+    </div>
+
+    <!-- FEATURES -->
+    <div class="features">
+        <div class="feature-card">
+            <div class="feature-icon">🧠</div>
+            <div class="feature-title">Face Analysis</div>
+            <div class="feature-desc">Deep neural network scans facial geometry for manipulation signatures.</div>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🔬</div>
+            <div class="feature-title">Texture Mapping</div>
+            <div class="feature-desc">Detects unnatural skin textures and GAN-generated surface artifacts.</div>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">📊</div>
+            <div class="feature-title">Frequency Analysis</div>
+            <div class="feature-desc">Fourier transform analysis exposes hidden frequency anomalies.</div>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">📋</div>
+            <div class="feature-title">Analysis History</div>
+            <div class="feature-desc">Every scan is saved to your profile for future reference and review.</div>
+        </div>
+    </div>
+</body>
+</html>

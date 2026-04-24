@@ -1,0 +1,100 @@
+
+
+# Model files (>25MB - use Google Drive)
+*.h5
+*.keras
+models/*.h5
+models/*.keras
+*.pkl
+*.pth
+
+# Dataset 
+data/
+dataset/
+datasets/
+train/
+test/
+validation/
+val/
+*.zip
+*.rar
+*.tar.gz
+*.7z
+
+# Large media files
+*.mp4
+*.avi
+*.mov
+*.mkv
+
+
+
+# Byte-compiled / optimized
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+deepfake-env/
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# PyCharm
+.idea/
+
+# VS Code
+.vscode/
+
+# ==========================================
+# TEMPORARY FILES
+# ==========================================
+
+# Uploads folder (temporary image storage)
+backend/uploads/
+uploads/
+temp/
+tmp/
+*.tmp
+*.bak
+~*
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+
+# ==========================================
+# DATABASE
+# ==========================================
+
+# SQLite databases (regenerated on deployment)
+*.db
+*.sqlite
+*.sqlite3
+database.db
+
+
+
+# Allow training history plot
+!models/training_history.png
+
+# Allow small sample images for README
+!images/sample_*.png
+!images/screenshot_*.png
+
+# Allow documentation PDFs 
+!docs/*.pdf
