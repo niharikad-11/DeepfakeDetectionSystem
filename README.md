@@ -3,7 +3,7 @@
 
 
 AI-powered deepfake detection using ResNet50 transfer learning with web interface.
-
+https://drive.google.com/drive/folders/1H8JWlvvZEROMGkZtF3R0cue7W5epWhuU
 
 
 
