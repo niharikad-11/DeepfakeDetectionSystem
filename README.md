@@ -3,6 +3,7 @@
 
 
 AI-powered deepfake detection using ResNet50 transfer learning with web interface.
+link to download the models file
 https://drive.google.com/drive/folders/1H8JWlvvZEROMGkZtF3R0cue7W5epWhuU
 
 
@@ -48,7 +49,7 @@ https://drive.google.com/drive/folders/1H8JWlvvZEROMGkZtF3R0cue7W5epWhuU
 
 
 
-\## 📋 Project Overview
+\##  Project Overview
 
 
 
@@ -60,27 +61,27 @@ This system detects AI-generated deepfake images using transfer learning with Re
 
 
 
-\## ✨ Features
+\##  Features
 
 
 
-\- 🖼️ Image upload (JPG, PNG, JPEG)
+\-  Image upload (JPG, PNG, JPEG)
 
-\- 🤖 AI-powered deepfake detection
+\-  AI-powered deepfake detection
 
-\- 📊 Confidence score display (0-100%)
+\-  Confidence score display (0-100%)
 
-\- 🌐 Web-based interface (no installation needed)
+\-  Web-based interface (no installation needed)
 
-\- ⚡ Fast predictions (<2 seconds)
+\-  Fast predictions (<2 seconds)
 
-\- 📝 Prediction history logging
+\-  Prediction history logging
 
-\- 🔌 RESTful API for integration
+\-  RESTful API for integration
 
 
 
-\## 🛠️ Technology Stack
+\##  Technology Stack
 
 
 
@@ -122,7 +123,7 @@ This system detects AI-generated deepfake images using transfer learning with Re
 
 
 
-\## 📊 Model Performance
+\##  Model Performance
 
 
 
@@ -130,7 +131,7 @@ This system detects AI-generated deepfake images using transfer learning with Re
 
 |--------|-------|
 
-| \*\*Validation Accuracy\*\* | 95.2% |
+| \*\*Validation Accuracy\*\* | 99% |
 
 | \*\*Precision\*\* | 94.8% |
 
@@ -142,5 +143,5 @@ This system detects AI-generated deepfake images using transfer learning with Re
 
 
 
-\## 📁 Project Structure
+\##  Project Structure
 
