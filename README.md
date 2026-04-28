@@ -133,11 +133,11 @@ This system detects AI-generated deepfake images using transfer learning with Re
 
 | \*\*Validation Accuracy\*\* | 99% |
 
-| \*\*Precision\*\* | 94.8% |
+| \*\*Precision\*\* | 100% |
 
-| \*\*Recall\*\* | 95.6% |
+| \*\*Recall\*\* | 100% |
 
-| \*\*F1-Score\*\* | 95.2% |
+| \*\*F1-Score\*\* | 100% |
 
 | \*\*Prediction Time\*\* | <2 seconds |
 
